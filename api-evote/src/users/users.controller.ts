@@ -1,25 +1,29 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
+import { UsersService } from './users.service'; // Asegurate de que esto esté bien importado
 
-@Controller('auth') // Esto crea la ruta http://localhost:3000/auth/login
+@Controller('auth')
 export class UsersController {
+  // 1. Inyectamos el servicio (esto te faltaba)
+  constructor(private readonly usersService: UsersService) {}
+
+  // 2. Esta es la ruta que te da el error 404
+  @Post('register')
+  async register(@Body() body: any) {
+    return this.usersService.create(body);
+  }
+
   @Post('login')
   async login(@Body() body: any) {
-    // Lógica dinámica: si el usuario es 'admin', le damos el poder.
-    // En un sistema real, acá consultarías tu UserSchema en MongoDB.
-    const { username, password } = body;
+    // Ahora el login es dinámico y busca en Atlas
+    const user = await this.usersService.findByUsername(body.username);
 
-    if (username === 'admin' && password === '1234') {
+    if (user && user.password === body.password) {
       return {
-        username: 'Admin Mendoza',
-        role: 'Admin',
-        token: 'session-token-maximus-2026',
-      };
-    } else {
-      return {
-        username: username,
-        role: 'Usuario',
-        token: 'session-token-user-2026',
+        username: user.username,
+        role: user.role,
+        token: `token-${user.role}-2026`,
       };
     }
+    throw new UnauthorizedException('Credenciales inválidas');
   }
 }

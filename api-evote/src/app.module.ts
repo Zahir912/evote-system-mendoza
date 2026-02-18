@@ -1,15 +1,22 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config'; // Importar esto
 import { MongooseModule } from '@nestjs/mongoose';
-import { ElectionsModule } from './elections/elections.module'; // IMPORTANTE
+import { ElectionsModule } from './elections/elections.module';
 import { VotesModule } from './votes/votes.module';
-import { UsersController } from './users/users.controller';
 import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://127.0.0.1:27017/evote_db'),
+    // 1. Cargamos la configuración global de variables de entorno
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    // 2. Usamos la variable de entorno para Atlas (o local si no existe)
+    MongooseModule.forRoot(
+      process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/evote_db',
+    ),
     UsersModule,
-    ElectionsModule, // DEBE ESTAR AQUÍ
+    ElectionsModule,
     VotesModule,
   ],
 })
